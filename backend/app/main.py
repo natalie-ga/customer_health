@@ -1,29 +1,63 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
 from datetime import datetime
-import json
+import random
+
+from .database import get_db
+from .models import Customer
 
 app = FastAPI(title="Customer Health API", version="1.0.0")
+
+def calculate_mock_score(customer: Customer) -> dict:
+    """
+    Calculate a mock health score for a customer.
+    In M2, this is still mocked but will be real in later milestones.
+    """
+    # Generate a consistent but varied score based on customer data
+    random.seed(hash(str(customer.id)))
+    score = random.randint(60, 95)
+    
+    if score >= 85:
+        label = "Healthy"
+    elif score >= 70:
+        label = "At Risk"
+    else:
+        label = "Unhealthy"
+    
+    return {
+        "score": score,
+        "label": label,
+        "last_updated": datetime.now().isoformat()
+    }
 
 @app.get("/")
 def read_root():
     return {"message": "Customer Health API is running"}
 
 @app.get("/api/customers")
-def get_customers():
+def get_customers(db: Session = Depends(get_db)):
     """
-    Return a mock list of customers with health scores.
-    This is the M0 walking skeleton implementation.
+    Return customers from database with mock health scores.
+    M2 implementation: reads customers from DB, scores still mocked.
     """
-    mock_customer = {
-        "id": "c_1",
-        "name": "Acme",
-        "segment": "smb", 
-        "score": 82,
-        "label": "Healthy",
-        "last_updated": datetime.now().isoformat()
-    }
+    # Fetch all customers from database
+    customers = db.query(Customer).all()
     
-    return [mock_customer]
+    # Transform to API response format with mock scores
+    customer_list = []
+    for customer in customers:
+        health_data = calculate_mock_score(customer)
+        customer_data = {
+            "id": str(customer.id),
+            "name": customer.name,
+            "segment": customer.segment,
+            "score": health_data["score"],
+            "label": health_data["label"],
+            "last_updated": health_data["last_updated"]
+        }
+        customer_list.append(customer_data)
+    
+    return customer_list
 
 if __name__ == "__main__":
     import uvicorn
