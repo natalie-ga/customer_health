@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -35,6 +35,26 @@ def get_customers(db: Session = Depends(get_db)):
         customer_list.append(customer_data)
     
     return customer_list
+
+@app.get("/api/customers/{id}/health")
+def get_customer_health(id: str, db: Session = Depends(get_db)):
+    """
+    Return the detailed health score breakdown for a specific customer.
+    """
+    customer = db.query(Customer).filter(Customer.id == id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+        
+    health_data = calculate_customer_health_score(db, customer)
+
+    return {
+        "id": str(customer.id),
+        "name": customer.name,
+        "score": health_data["score"],
+        "label": health_data["label"],
+        "last_updated": health_data["last_updated"],
+        "breakdown": health_data["breakdown"]
+    }
 
 if __name__ == "__main__":
     import uvicorn

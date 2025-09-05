@@ -164,12 +164,119 @@ def get_distinct_features_used(feature_events: List[Event]) -> Set[str]:
     return features
 
 
+def calc_support_ticket_score(open_tickets: int, closed_tickets: int, severity_weights: Dict[str, float] = None) -> float:
+    """
+    Calculate support ticket score based on ticket volume (inverse scoring).
+    
+    Args:
+        open_tickets: Number of currently open tickets
+        closed_tickets: Number of closed tickets in the period
+        severity_weights: Optional weights for different severities
+        
+    Returns:
+        float: Support ticket score between 0-100 (lower tickets = higher score)
+        
+    Scoring Logic (Inverse):
+    - More open tickets = lower score (indicates ongoing issues)
+    - High volume of tickets overall = lower score (indicates problematic customer)
+    - Weight open tickets more heavily than closed ones
+    - 0 tickets = 100 points (perfect)
+    - 1-2 tickets = 85 points (very good)
+    - 3-5 tickets = 70 points (acceptable)
+    - 6-10 tickets = 50 points (concerning)
+    - 11-15 tickets = 30 points (high risk)
+    - 16+ tickets = 10 points (critical risk)
+    """
+    # Weight open tickets more heavily (2x impact)
+    weighted_ticket_count = (open_tickets * 2) + closed_tickets
+    
+    if weighted_ticket_count == 0:
+        return 100.0
+    elif weighted_ticket_count <= 2:
+        return 85.0
+    elif weighted_ticket_count <= 5:
+        return 70.0
+    elif weighted_ticket_count <= 10:
+        return 50.0
+    elif weighted_ticket_count <= 15:
+        return 30.0
+    else:
+        return 10.0
+
+
+def get_customer_support_tickets_30d(db: Session, customer_id: str) -> Dict[str, List[Event]]:
+    """
+    Fetch support ticket events for a customer from the past 30 days.
+    
+    Args:
+        db: Database session
+        customer_id: Customer UUID
+        
+    Returns:
+        Dict with 'open' and 'close' ticket events from past 30 days
+    """
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    
+    # Get all ticket events
+    ticket_events = db.query(Event).filter(
+        and_(
+            Event.customer_id == customer_id,
+            Event.event_type.in_(['ticket_open', 'ticket_close']),
+            Event.ts >= thirty_days_ago
+        )
+    ).order_by(Event.ts.asc()).all()
+    
+    open_events = [e for e in ticket_events if e.event_type == 'ticket_open']
+    close_events = [e for e in ticket_events if e.event_type == 'ticket_close']
+    
+    return {
+        'open': open_events,
+        'close': close_events
+    }
+
+
+def calculate_open_ticket_count(ticket_events: Dict[str, List[Event]]) -> Dict[str, int]:
+    """
+    Calculate the number of currently open tickets based on open/close events.
+    
+    Args:
+        ticket_events: Dict with 'open' and 'close' event lists
+        
+    Returns:
+        Dict with counts: {'open': int, 'closed': int, 'net_open': int}
+    """
+    open_events = ticket_events['open']
+    close_events = ticket_events['close']
+    
+    # Get ticket IDs that were opened
+    opened_ticket_ids = set()
+    for event in open_events:
+        if event.event_metadata and 'ticket_id' in event.event_metadata:
+            opened_ticket_ids.add(event.event_metadata['ticket_id'])
+    
+    # Get ticket IDs that were closed
+    closed_ticket_ids = set()
+    for event in close_events:
+        if event.event_metadata and 'ticket_id' in event.event_metadata:
+            closed_ticket_ids.add(event.event_metadata['ticket_id'])
+    
+    # Calculate net open tickets (opened but not yet closed)
+    net_open_tickets = opened_ticket_ids - closed_ticket_ids
+    
+    return {
+        'open': len(open_events),
+        'closed': len(close_events), 
+        'net_open': len(net_open_tickets)
+    }
+
+
 def calculate_customer_health_score(db: Session, customer: Customer) -> Dict[str, Any]:
     """
     Calculate comprehensive health score for a customer.
     
     M3 Implementation: Uses real login frequency + stub factors with weights.
     M4 Implementation: Adds real feature adoption scoring with configurable weights.
+    M5 Implementation: Adds real support ticket volume scoring (inverse).
     
     Args:
         db: Database session
@@ -187,15 +294,22 @@ def calculate_customer_health_score(db: Session, customer: Customer) -> Dict[str
     distinct_features = get_distinct_features_used(feature_events)
     feature_adoption_score = calc_feature_adoption_score(len(distinct_features))
     
-    # Stub scores for other factors (will be implemented in future milestones)
-    support_ticket_score = 75.0  # Stub: assume moderate support activity
+    # Get support ticket events for scoring (M5)
+    ticket_events = get_customer_support_tickets_30d(db, customer.id)
+    ticket_counts = calculate_open_ticket_count(ticket_events)
+    support_ticket_score = calc_support_ticket_score(
+        ticket_counts['net_open'], 
+        ticket_counts['closed']
+    )
+    
+    # Stub scores for remaining factors
     payment_health_score = 90.0  # Stub: assume good payment status
     
-    # Configurable weights via environment variables (M4 requirement)
+    # Configurable weights via environment variables (M5 update)
     weights = {
-        'login_frequency': float(os.getenv('WEIGHT_LOGIN_FREQUENCY', '0.35')),      # 35% - Real factor
-        'feature_adoption': float(os.getenv('WEIGHT_FEATURE_ADOPTION', '0.35')),    # 35% - Real factor (M4)
-        'support_tickets': float(os.getenv('WEIGHT_SUPPORT_TICKETS', '0.15')),      # 15% - Stub
+        'login_frequency': float(os.getenv('WEIGHT_LOGIN_FREQUENCY', '0.30')),      # 30% - Real factor
+        'feature_adoption': float(os.getenv('WEIGHT_FEATURE_ADOPTION', '0.30')),    # 30% - Real factor (M4)
+        'support_tickets': float(os.getenv('WEIGHT_SUPPORT_TICKETS', '0.25')),      # 25% - Real factor (M5)
         'payment_health': float(os.getenv('WEIGHT_PAYMENT_HEALTH', '0.15'))         # 15% - Stub
     }
     
@@ -235,7 +349,10 @@ def calculate_customer_health_score(db: Session, customer: Customer) -> Dict[str
             'support_tickets': {
                 'score': support_ticket_score,
                 'weight': weights['support_tickets'],
-                'note': 'Stub implementation'
+                'total_opened': ticket_counts['open'],
+                'total_closed': ticket_counts['closed'],
+                'currently_open': ticket_counts['net_open'],
+                'weighted_count': (ticket_counts['net_open'] * 2) + ticket_counts['closed']
             },
             'payment_health': {
                 'score': payment_health_score,

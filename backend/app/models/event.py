@@ -17,7 +17,7 @@ class Event(Base):
     __tablename__ = "events"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
+    customer_id = Column(Text, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
     event_type = Column(Text, nullable=False)  # login, feature_usage, support_ticket, etc.
     ts = Column(DateTime(timezone=True), server_default=func.now())
     event_metadata = Column(JSONB)  # Additional event data
