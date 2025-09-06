@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, Body
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
+import os
 
 from .database import get_db
 from .models import Customer, Event
@@ -14,6 +17,11 @@ class EventCreate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 app = FastAPI(title="Customer Health API", version="1.0.0")
+
+# Mount static files for React build
+frontend_build_path = os.path.join(os.path.dirname(__file__), "../../../frontend/build")
+if os.path.exists(frontend_build_path):
+    app.mount("/static", StaticFiles(directory=os.path.join(frontend_build_path, "static")), name="static")
 
 @app.get("/")
 def read_root():
@@ -138,6 +146,21 @@ def get_customer_events(id: str, db: Session = Depends(get_db)):
         "total_events": len(event_list),
         "events": event_list
     }
+
+@app.get("/api/dashboard")
+def get_dashboard():
+    """
+    Serve the React dashboard.
+    D1 implementation: Serve static HTML page that fetches /api/customers and renders a table.
+    """
+    template_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
+    
+    if os.path.exists(template_path):
+        return FileResponse(template_path)
+    else:
+        # Fallback: return a simple message if template doesn't exist
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(content="<h1>Dashboard not available</h1><p>Template file not found.</p>")
 
 if __name__ == "__main__":
     import uvicorn

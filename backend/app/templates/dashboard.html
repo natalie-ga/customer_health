@@ -54,6 +54,7 @@
         }
         tr:hover {
             background-color: #f5f5f5;
+            cursor: pointer;
         }
         .badge {
             padding: 4px 8px;
@@ -72,7 +73,7 @@
     <div class="container">
         <div class="header">
             <h1>Customer Health Dashboard</h1>
-            <p>Simple HTML fallback - React app will be available after build</p>
+            <p>Click on a customer to view detailed health breakdown</p>
         </div>
         <div class="content">
             <div id="app">
@@ -99,7 +100,7 @@
                         </thead>
                         <tbody>
                             ${customers.map(customer => `
-                                <tr>
+                                <tr onclick="showCustomerDetail('${customer.id}')">
                                     <td>
                                         <strong>${customer.name}</strong><br>
                                         <small style="color: #666;">ID: ${customer.id}</small>
@@ -118,6 +119,71 @@
             } catch (error) {
                 document.getElementById('app').innerHTML = `
                     <div class="error">Error loading customers: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function showCustomerDetail(customerId) {
+            try {
+                const [healthResponse, eventsResponse] = await Promise.all([
+                    fetch(`/api/customers/${customerId}/health`),
+                    fetch(`/api/customers/${customerId}/events`)
+                ]);
+                
+                const health = await healthResponse.json();
+                const events = await eventsResponse.json();
+                
+                const app = document.getElementById('app');
+                app.innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <button onclick="loadCustomers()" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            ← Back to List
+                        </button>
+                    </div>
+                    <h2>${health.name} - Health Details</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
+                            <h4>Overall Score</h4>
+                            <div style="font-size: 24px; font-weight: 600;">${health.score}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
+                            <h4>Status</h4>
+                            <span class="badge ${getHealthClass(health.score)}">${getHealthLabel(health.score)}</span>
+                        </div>
+                    </div>
+                    <h3>Health Breakdown</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        ${Object.entries(health.breakdown).map(([factor, data]) => `
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef;">
+                                <h4>${factor.replace('_', ' ').toUpperCase()}</h4>
+                                <div style="font-size: 18px; font-weight: 600; color: #27ae60;">${data.score}</div>
+                                <div style="font-size: 14px; color: #6c757d;">
+                                    Weight: ${(data.weight * 100).toFixed(0)}%
+                                    ${data.total_logins ? `<br>Logins: ${data.total_logins}` : ''}
+                                    ${data.unique_features ? `<br>Features: ${data.unique_features}` : ''}
+                                    ${data.total_opened ? `<br>Tickets: ${data.total_opened} opened, ${data.total_closed} closed` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <h3>Recent Events (Last 10)</h3>
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 6px;">
+                        ${events.events.slice(0, 10).map(event => `
+                            <div style="padding: 15px; border-bottom: 1px solid #e9ecef; display: flex; justify-content: space-between;">
+                                <div>
+                                    <div style="font-weight: 600;">${event.event_type}</div>
+                                    ${event.event_metadata ? `<div style="font-size: 12px; color: #6c757d;">${JSON.stringify(event.event_metadata)}</div>` : ''}
+                                </div>
+                                <div style="font-size: 12px; color: #6c757d;">
+                                    ${new Date(event.ts).toLocaleString()}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('app').innerHTML = `
+                    <div class="error">Error loading customer details: ${error.message}</div>
                 `;
             }
         }
