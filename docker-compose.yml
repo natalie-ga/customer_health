@@ -25,6 +25,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./customers.csv:/app/customers.csv
+      - ./events.csv:/app/events.csv
     restart: unless-stopped
 
 volumes:
