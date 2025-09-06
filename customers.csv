@@ -1,0 +1,51 @@
+id,name,segment,created_at
+c_001,BrightPath Legal,SMB,2024-08-07T15:55:35+00:00
+c_002,Cedar & Pine Retail,SMB,2024-05-02T02:56:16+00:00
+c_003,Aurafy,startup,2024-05-28T22:00:33+00:00
+c_004,Redwood Pharmacy,SMB,2024-07-31T19:31:59+00:00
+c_005,VertexNetworks Inc,enterprise,2024-07-13T06:33:59+00:00
+c_006,Magnetar Enterprises,enterprise,2024-05-15T19:16:33+00:00
+c_007,BrightPath Legal (Toronto),SMB,2024-06-01T20:18:37+00:00
+c_008,Lighthouse IT,SMB,2024-06-04T10:28:42+00:00
+c_009,Urban Canvas Studio,SMB,2024-05-31T00:21:02+00:00
+c_010,Cornerstone Security,SMB,2024-05-31T00:15:42+00:00
+c_011,GlobalSolutions International,enterprise,2024-07-30T04:44:10+00:00
+c_012,Willow Creek Health,SMB,2024-07-07T21:13:05+00:00
+c_013,Magnetar Enterprises (Boston),enterprise,2024-07-06T08:28:25+00:00
+c_014,QuantumSystems Enterprises,enterprise,2024-08-11T21:02:34+00:00
+c_015,VectorScale Group,enterprise,2024-07-13T04:06:25+00:00
+c_016,Spark HR,SMB,2024-06-07T04:02:59+00:00
+c_017,Meadowview Nursery,SMB,2024-05-22T00:03:05+00:00
+c_018,Rapid Print Works,SMB,2024-05-31T12:27:48+00:00
+c_019,Mintly,startup,2024-06-22T07:10:13+00:00
+c_020,NimbusGrid Enterprises,enterprise,2024-07-02T19:34:15+00:00
+c_021,BrightPath Legal (Seattle),SMB,2024-05-14T17:49:48+00:00
+c_022,Meadowview Nursery (Seattle),SMB,2024-05-15T04:12:10+00:00
+c_023,Harborview Cafe,SMB,2024-05-12T17:04:07+00:00
+c_024,Helixly,startup,2024-07-08T10:42:10+00:00
+c_025,Willow Creek Health (Dublin),SMB,2024-05-30T17:18:48+00:00
+c_026,Redwood Pharmacy (Berlin),SMB,2024-05-01T07:57:08+00:00
+c_027,Tensorbit,startup,2024-08-13T08:52:27+00:00
+c_028,OmniSphere Corporation,enterprise,2024-06-29T03:13:56+00:00
+c_029,Elm Street Deli,SMB,2024-08-21T04:30:24+00:00
+c_030,Helixly (SF),startup,2024-05-30T09:39:12+00:00
+c_031,QuantaHub,startup,2024-07-07T20:54:30+00:00
+c_032,CrownPoint Enterprises,enterprise,2024-06-15T03:30:53+00:00
+c_033,Granite Accounting,SMB,2024-06-02T02:27:01+00:00
+c_034,Downtown Marketing,SMB,2024-06-29T18:59:52+00:00
+c_035,Willow Creek Health (Seattle),SMB,2024-05-15T05:43:31+00:00
+c_036,Silver Oak Realtors,SMB,2024-06-02T19:30:41+00:00
+c_037,QuantaHub (Tel Aviv),startup,2024-08-19T07:11:07+00:00
+c_038,BlueRock Corporation,enterprise,2024-06-26T05:52:44+00:00
+c_039,Urban Canvas Studio (London),SMB,2024-08-18T07:04:53+00:00
+c_040,Rapid Print Works (London),SMB,2024-08-11T09:15:39+00:00
+c_041,NorthStar International,enterprise,2024-08-09T03:06:53+00:00
+c_042,CloudVibe,startup,2024-08-09T01:23:54+00:00
+c_043,OrbitalAI,startup,2024-06-29T06:09:20+00:00
+c_044,Cinderstone Holdings,enterprise,2024-08-03T06:55:04+00:00
+c_045,Silver Oak Realtors (SF),SMB,2024-07-07T12:37:09+00:00
+c_046,VectorScale Holdings,enterprise,2024-08-12T04:29:16+00:00
+c_047,Cinderstone International,enterprise,2024-06-01T21:27:39+00:00
+c_048,ApexLogic Enterprises,enterprise,2024-07-03T09:36:54+00:00
+c_049,Spark HR (SF),SMB,2024-05-08T22:32:40+00:00
+c_050,FlowTech,startup,2024-05-11T04:25:24+00:00
