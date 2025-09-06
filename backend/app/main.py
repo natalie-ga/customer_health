@@ -30,22 +30,25 @@ def read_root():
 @app.get("/api/customers")
 def get_customers(db: Session = Depends(get_db)):
     """
-    Return customers from database with real health scores based on login frequency.
-    M3 implementation: Uses actual login events for scoring with weighted factors.
+    Return customers from database with comprehensive 5-factor health scores.
+    Uses all factors: login frequency, feature adoption, support tickets, payment health, and API usage.
+    Scores calculated for last 30 days (Sep 2024) with configurable weights.
     """
     # Fetch all customers from database
     customers = db.query(Customer).all()
     
-    # Transform to API response format with real health scores
+    # Transform to API response format with comprehensive health scores
     customer_list = []
     for customer in customers:
-        # Calculate real health score using login frequency + weighted factors
+        # Calculate comprehensive 5-factor health score
         health_data = calculate_customer_health_score(db, customer)
         
         customer_data = {
             "id": str(customer.id),
             "name": customer.name,
-            "score": health_data["score"]
+            "segment": customer.segment,
+            "score": health_data["score"],
+            "label": health_data["label"]
         }
         customer_list.append(customer_data)
     
@@ -65,6 +68,7 @@ def get_customer_health(id: str, db: Session = Depends(get_db)):
     return {
         "id": str(customer.id),
         "name": customer.name,
+        "segment": customer.segment,
         "score": health_data["score"],
         "label": health_data["label"],
         "last_updated": health_data["last_updated"],
